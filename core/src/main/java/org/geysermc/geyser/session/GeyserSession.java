@@ -204,6 +204,7 @@ import org.geysermc.geyser.translator.inventory.InventoryTranslator;
 import org.geysermc.geyser.translator.text.MessageTranslator;
 import org.geysermc.geyser.util.ChunkUtils;
 import org.geysermc.geyser.util.CooldownUtils;
+import org.geysermc.geyser.util.GeyserMemoryStats;
 import org.geysermc.geyser.util.EntityUtils;
 import org.geysermc.geyser.util.GeyserIntegratedPackUtil;
 import org.geysermc.geyser.util.InventoryUtils;
@@ -882,6 +883,7 @@ public class GeyserSession implements GeyserConnection, GeyserCommandSource, Jav
         this.geyser = geyser;
         this.upstream = new UpstreamSession(bedrockServerSession);
         this.tickEventLoop = tickEventLoop;
+        GeyserMemoryStats.trackSession(this);
 
         this.erosionHandler = new GeyserboundHandshakePacketHandler(this);
 

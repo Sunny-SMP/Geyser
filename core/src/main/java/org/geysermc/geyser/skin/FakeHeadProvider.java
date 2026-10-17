@@ -100,6 +100,10 @@ public class FakeHeadProvider {
                 }
             });
 
+    public static long cacheSize() {
+        return MERGED_SKINS_LOADING_CACHE.size();
+    }
+
     public static void setHead(GeyserSession session, AvatarEntity entity, @Nullable ResolvableProfile profile) {
         if (profile == null) {
             return;
