@@ -94,8 +94,6 @@ public class SkinProvider {
     private static final Map<String, CompletableFuture<Cape>> requestedCapes = new ConcurrentHashMap<>();
     private static final Map<String, CompletableFuture<Skin>> requestedSkins = new ConcurrentHashMap<>();
 
-    private static final Map<UUID, SkinGeometry> cachedGeometry = new ConcurrentHashMap<>();
-
     /**
      * Citizens NPCs use UUID version 2, while legitimate Minecraft players use version 4, and
      * offline mode players use version 3.
@@ -225,7 +223,10 @@ public class SkinProvider {
             if (session != null) {
                 skin = CACHED_BEDROCK_SKINS.getIfPresent(uuid);
                 cape = CACHED_BEDROCK_CAPES.getIfPresent(uuid);
-                geometry = cachedGeometry.getOrDefault(uuid, geometry);
+                SkinGeometry bedrockGeometry = session.getBedrockGeometry();
+                if (bedrockGeometry != null) {
+                    geometry = bedrockGeometry;
+                }
             }
         }
 
@@ -405,12 +406,6 @@ public class SkinProvider {
     public static void removeBedrockSkin(UUID playerID) {
         CACHED_BEDROCK_SKINS.invalidate(playerID);
         CACHED_BEDROCK_CAPES.invalidate(playerID);
-        cachedGeometry.remove(playerID);
-    }
-
-    static void storeBedrockGeometry(UUID playerID, byte[] geometryName, byte[] geometryData) {
-        SkinGeometry geometry = new SkinGeometry(new String(geometryName), new String(geometryData));
-        cachedGeometry.put(playerID, geometry);
     }
 
     private static Skin supplySkin(UUID uuid, String textureUrl) {
