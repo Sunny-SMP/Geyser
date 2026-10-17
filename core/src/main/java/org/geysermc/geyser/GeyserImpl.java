@@ -103,6 +103,7 @@ import org.geysermc.geyser.text.MinecraftLocale;
 import org.geysermc.geyser.translator.text.MessageTranslator;
 import org.geysermc.geyser.util.AssetUtils;
 import org.geysermc.geyser.util.CodeOfConductManager;
+import org.geysermc.geyser.util.GeyserMemoryStats;
 import org.geysermc.geyser.util.InternalPlatformType;
 import org.geysermc.geyser.util.JsonUtils;
 import org.geysermc.geyser.util.NewsHandler;
@@ -548,6 +549,7 @@ public class GeyserImpl implements GeyserApi, EventRegistrar {
         }
 
         setupMetrics(config, logger);
+        GeyserMemoryStats.register(this);
 
         loadSavedAuthChains(config, logger);
 
@@ -684,6 +686,7 @@ public class GeyserImpl implements GeyserApi, EventRegistrar {
         }
 
         runIfNonNull(metrics, MetricsBase::shutdown);
+        GeyserMemoryStats.unregister();
         runIfNonNull(scheduledThread, ScheduledExecutorService::shutdown);
         runIfNonNull(scoreboardUpdater, ScoreboardUpdater::shutdown);
         runIfNonNull(netherNetServer, NetherNetServer::shutdown);
