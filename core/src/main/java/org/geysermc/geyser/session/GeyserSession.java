@@ -125,6 +125,7 @@ import org.geysermc.geyser.api.event.bedrock.SessionDisconnectEvent;
 import org.geysermc.geyser.api.event.bedrock.SessionLoginEvent;
 import org.geysermc.geyser.api.network.RemoteServer;
 import org.geysermc.geyser.api.skin.SkinData;
+import org.geysermc.geyser.api.skin.SkinGeometry;
 import org.geysermc.geyser.api.util.PlatformType;
 import org.geysermc.geyser.command.CommandRegistry;
 import org.geysermc.geyser.command.GeyserCommandSource;
@@ -281,6 +282,12 @@ public class GeyserSession implements GeyserConnection, GeyserCommandSource {
     @Setter
     private AuthData authData;
     private BedrockClientData clientData;
+    /**
+     * This player's own Bedrock skin geometry, used as a fallback when no Java skin can be applied to them.
+     * Read from skin threads, hence volatile.
+     */
+    @Setter
+    private volatile @Nullable SkinGeometry bedrockGeometry;
     /**
      * Used for Floodgate skin uploading
      */

@@ -236,7 +236,7 @@ public class SkinManager {
 
             if (skinBytes.length <= (128 * 128 * 4) && !clientData.isPersonaSkin()) {
                 SkinProvider.storeBedrockSkin(playerEntity.uuid(), clientData.getSkinId(), skinBytes);
-                SkinProvider.storeBedrockGeometry(playerEntity.uuid(), geometryNameBytes, geometryBytes);
+                playerEntity.getSession().setBedrockGeometry(new SkinGeometry(new String(geometryNameBytes), new String(geometryBytes)));
             } else if (geyser.config().debugMode()) {
                 geyser.getLogger().info(GeyserLocale.getLocaleStringLog("geyser.skin.bedrock.fail", playerEntity.getUsername()));
                 geyser.getLogger().debug("The size of '" + playerEntity.getUsername() + "' skin is: " + clientData.getSkinImageWidth() + "x" + clientData.getSkinImageHeight());
