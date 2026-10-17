@@ -61,6 +61,10 @@ public class ChunkCache {
         this.chunks.put(chunkPosition, geyserChunk);
     }
 
+    public int size() {
+        return cache ? chunks.size() : 0;
+    }
+
     /**
      * Doesn't check for cache enabled, so don't use this without checking that first!
      */

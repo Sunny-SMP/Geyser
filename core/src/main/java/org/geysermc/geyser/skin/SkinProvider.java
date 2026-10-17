@@ -201,6 +201,22 @@ public class SkinProvider {
         }
     }
 
+    public static long javaSkinCacheSize() {
+        return CACHED_JAVA_SKINS.size();
+    }
+
+    public static long javaCapeCacheSize() {
+        return CACHED_JAVA_CAPES.size();
+    }
+
+    public static long bedrockSkinCacheSize() {
+        return CACHED_BEDROCK_SKINS.size();
+    }
+
+    public static long bedrockCapeCacheSize() {
+        return CACHED_BEDROCK_CAPES.size();
+    }
+
     /**
      * Search our cached database for an already existing, translated skin of this Java URL.
      */

@@ -148,6 +148,10 @@ public class SkinManager {
             .build();
     }
 
+    public static long resolvedProfileCacheSize() {
+        return RESOLVED_PROFILES_CACHE.size();
+    }
+
     public static CompletableFuture<GameProfile> resolveProfile(ResolvableProfile profile) {
         GameProfile partial = profile.getProfile();
         if (!profile.isDynamic()) {
