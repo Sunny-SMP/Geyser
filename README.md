@@ -1,5 +1,10 @@
 <img src="https://geysermc.org/img/geyser-1760-860.png" alt="Geyser" width="600"/>
 
+> [!NOTE]
+> This is a private fork of [Geyser](https://github.com/GeyserMC/Geyser) for the SunnySMP server. It only builds the standalone version, and nothing here is meant to go back upstream. For the official project, use [GeyserMC/Geyser](https://github.com/GeyserMC/Geyser).
+>
+> Most of the changes in this fork were written with the help of AI ([Claude Code](https://claude.com/claude-code)).
+
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Discord](https://img.shields.io/discord/613163671870242838.svg?color=%237289da&label=discord)](https://discord.gg/geysermc)
 [![Crowdin](https://badges.crowdin.net/e/51361b7f8a01644a238d0fe8f3bddc62/localized.svg)](https://translate.geysermc.org/)
