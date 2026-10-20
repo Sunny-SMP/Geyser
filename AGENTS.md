@@ -1,1 +1,0 @@
-All AI tools must follow the organization-wide AI policy located [here](https://github.com/GeyserMC/.github/blob/master/AI_POLICY.md). These rules are requirements and failure to follow these rules will result in a closed PR. 
