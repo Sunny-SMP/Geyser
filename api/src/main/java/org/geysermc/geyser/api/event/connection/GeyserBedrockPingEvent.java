@@ -26,6 +26,7 @@
 package org.geysermc.geyser.api.event.connection;
 
 import org.checkerframework.checker.index.qual.NonNegative;
+import org.geysermc.event.Cancellable;
 import org.geysermc.event.Event;
 import org.jspecify.annotations.Nullable;
 
@@ -36,8 +37,11 @@ import java.net.InetSocketAddress;
  * <p>
  * This event allows you to modify/obtain the MOTD, maximum player count, and current number of players online.
  * Geyser will reply to the client with the information provided in this event.
+ * <p>
+ * Cancelling this event leaves a RakNet ping unanswered, so the server looks offline to whoever pinged it,
+ * e.g. a load balancer's health check. NetherNet status queries are still answered.
  */
-public interface GeyserBedrockPingEvent extends Event {
+public interface GeyserBedrockPingEvent extends Event, Cancellable {
 
     /**
      * Sets the given string as the primary motd, the given string cannot be null.

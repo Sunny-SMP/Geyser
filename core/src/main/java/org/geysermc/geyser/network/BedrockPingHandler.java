@@ -40,6 +40,7 @@ import org.geysermc.geyser.translator.text.MessageTranslator;
 
 import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
+import java.util.Objects;
 
 /**
  * Handles Bedrock pings (either via raknet, or providing to the signaling server for nethernet).
@@ -77,6 +78,17 @@ public final class BedrockPingHandler {
      * @return the pong to answer the query with
      */
     public BedrockPong onQuery(long serverId, InetSocketAddress inetSocketAddress, @Nullable String hostname) {
+        return Objects.requireNonNull(onQuery(serverId, inetSocketAddress, hostname, false));
+    }
+
+    /**
+     * @param serverId the server ID to advertise; the RakNet GUID when answering a RakNet ping
+     * @param inetSocketAddress the address the query came from
+     * @param hostname the hostname the client queried, such as an HTTP Host header; null if unknown, e.g. for RakNet pings
+     * @param cancellable whether an extension cancelling the ping event leaves the query unanswered
+     * @return the pong to answer the query with, or null if it should go unanswered
+     */
+    public @Nullable BedrockPong onQuery(long serverId, InetSocketAddress inetSocketAddress, @Nullable String hostname, boolean cancellable) {
         // TODO probably pointless now with nethernet?
         if (geyser.config().debugMode() && PRINT_DEBUG_PINGS) {
             String ip = geyser.config().logPlayerIpAddresses() ? inetSocketAddress.toString() : "<IP address withheld>";
@@ -126,7 +138,11 @@ public final class BedrockPingHandler {
             pong.maximumPlayerCount(config.motd().maxPlayers());
         }
 
-        this.geyser.eventBus().fire(new GeyserBedrockPingEventImpl(pong, inetSocketAddress));
+        GeyserBedrockPingEventImpl event = new GeyserBedrockPingEventImpl(pong, inetSocketAddress);
+        this.geyser.eventBus().fire(event);
+        if (cancellable && event.isCancelled()) {
+            return null;
+        }
 
         // https://github.com/GeyserMC/Geyser/issues/3388
         pong.motd(pong.motd().replace(';', ':'));
