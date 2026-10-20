@@ -30,9 +30,9 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import lombok.RequiredArgsConstructor;
 import org.cloudburstmc.netty.channel.raknet.RakPing;
-import org.cloudburstmc.netty.channel.raknet.RakPong;
 import org.cloudburstmc.netty.channel.raknet.RakServerChannel;
 import org.cloudburstmc.netty.channel.raknet.config.RakChannelOption;
+import org.cloudburstmc.protocol.bedrock.BedrockPong;
 import org.geysermc.geyser.network.BedrockPingHandler;
 
 import java.net.InetSocketAddress;
@@ -50,7 +50,11 @@ public class RakPingHandler extends SimpleChannelInboundHandler<RakPing> {
 
         InetSocketAddress address = msg.getSender();
         InetSocketAddress clientAddress = ((RakServerChannel) ctx.channel()).getClientAddress(address);
-        RakPong pong = msg.reply(guid, this.pingResponder.onQuery(guid, clientAddress, null).toByteBuf());
-        ctx.writeAndFlush(pong);
+        BedrockPong pong = this.pingResponder.onQuery(guid, clientAddress, null, true);
+        if (pong == null) {
+            // An extension cancelled the ping event; stay silent, like an offline server would
+            return;
+        }
+        ctx.writeAndFlush(msg.reply(guid, pong.toByteBuf()));
     }
 }

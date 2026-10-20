@@ -37,10 +37,21 @@ import java.util.Objects;
 public class GeyserBedrockPingEventImpl implements GeyserBedrockPingEvent {
     private final InetSocketAddress address;
     private final BedrockPong pong;
+    private boolean cancelled;
 
     public GeyserBedrockPingEventImpl(BedrockPong pong, InetSocketAddress address) {
         this.address = address;
         this.pong = pong;
+    }
+
+    @Override
+    public boolean isCancelled() {
+        return cancelled;
+    }
+
+    @Override
+    public void setCancelled(boolean cancelled) {
+        this.cancelled = cancelled;
     }
 
     @Override
