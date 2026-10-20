@@ -5,11 +5,13 @@ plugins {
 
 indra {
     configurePublications {
-        if (shouldAddBranchName()) {
+        if (false && shouldAddBranchName()) {
             version = versionWithBranchName()
         }
     }
 
-    publishSnapshotsTo("geysermc", "https://repo.opencollab.dev/maven-snapshots")
-    publishReleasesTo("geysermc", "https://repo.opencollab.dev/maven-releases")
+//    publishSnapshotsTo("geysermc", "https://repo.opencollab.dev/maven-snapshots")
+//    publishReleasesTo("geysermc", "https://repo.opencollab.dev/maven-releases")
+    publishSnapshotsTo("SunnyInfra", "https://repo.sunnyinfra.cloud/development")
+
 }
