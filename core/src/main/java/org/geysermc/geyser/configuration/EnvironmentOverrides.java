@@ -28,7 +28,6 @@ package org.geysermc.geyser.configuration;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.geysermc.geyser.GeyserLogger;
-import org.geysermc.geyser.network.bedrock.nethernet.NetherNetServer;
 import org.spongepowered.configurate.CommentedConfigurationNode;
 import org.spongepowered.configurate.NodePath;
 import org.spongepowered.configurate.serialize.SerializationException;
@@ -47,8 +46,6 @@ import java.util.StringJoiner;
 final class EnvironmentOverrides {
     private static final String PREFIX = "GEYSER";
     private static final String CONFIG_VERSION_KEY = "GEYSER_CONFIG_VERSION";
-    /** Environment variables Geyser reads directly rather than as config overrides. */
-    private static final Set<String> NON_CONFIG_KEYS = Set.of(NetherNetServer.ADDITIONAL_HEADERS_ENV);
 
     private EnvironmentOverrides() {
     }
@@ -61,7 +58,7 @@ final class EnvironmentOverrides {
                          Map<String, String> env, @Nullable GeyserLogger logger) throws SerializationException {
         Map<String, String> remaining = new Object2ObjectOpenHashMap<>();
         env.forEach((key, value) -> {
-            if (key.startsWith(PREFIX + "_") && !NON_CONFIG_KEYS.contains(key)) {
+            if (key.startsWith(PREFIX + "_")) {
                 remaining.put(key, value);
             }
         });

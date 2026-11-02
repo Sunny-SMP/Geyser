@@ -53,19 +53,7 @@ public final class ConnectionRequests {
      */
     public static boolean accept(GeyserImpl geyser, InetSocketAddress clientAddress,
                                  @Nullable InetSocketAddress proxyAddress) {
-        return accept(geyser, clientAddress, proxyAddress, null);
-    }
-
-    /**
-     * As {@link #accept(GeyserImpl, InetSocketAddress, InetSocketAddress)}, naming where the transport
-     * learned the address in the debug line.
-     *
-     * @param source Where the address came from, or null when the transport has only the one kind
-     */
-    public static boolean accept(GeyserImpl geyser, InetSocketAddress clientAddress,
-                                 @Nullable InetSocketAddress proxyAddress, @Nullable String source) {
-        boolean logIps = geyser.config().logPlayerIpAddresses();
-        String ip = logIps ? String.valueOf(clientAddress) : "<IP address withheld>";
+        String ip = geyser.config().logPlayerIpAddresses() ? String.valueOf(clientAddress) : "<IP address withheld>";
 
         ConnectionRequestEvent requestEvent = new ConnectionRequestEvent(clientAddress, proxyAddress);
         geyser.eventBus().fire(requestEvent);
@@ -74,10 +62,7 @@ public final class ConnectionRequests {
             return false;
         }
 
-        String via = proxyAddress == null ? "" : "via " + (logIps ? proxyAddress : "<Proxy IP address withheld>");
-        String detail = String.join(" ", source == null ? "" : source, via).trim();
-        geyser.getLogger().debug(GeyserLocale.getLocaleStringLog("geyser.network.attempt_connect", ip)
-                + (detail.isEmpty() ? "" : " (" + detail + ")"));
+        geyser.getLogger().debug(GeyserLocale.getLocaleStringLog("geyser.network.attempt_connect", ip));
         return true;
     }
 }
