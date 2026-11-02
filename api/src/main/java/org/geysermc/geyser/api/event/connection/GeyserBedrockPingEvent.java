@@ -39,7 +39,8 @@ import java.net.InetSocketAddress;
  * Geyser will reply to the client with the information provided in this event.
  * <p>
  * Cancelling this event leaves a RakNet ping unanswered, so the server looks offline to whoever pinged it,
- * e.g. a load balancer's health check. NetherNet status queries are still answered.
+ * e.g. a load balancer's health check. Built-in signaling answers a cancelled NetherNet status query with a 404,
+ * so NetherNet looks absent too. The status Geyser reports to an external signaling service ignores cancellation.
  */
 public interface GeyserBedrockPingEvent extends Event, Cancellable {
 
