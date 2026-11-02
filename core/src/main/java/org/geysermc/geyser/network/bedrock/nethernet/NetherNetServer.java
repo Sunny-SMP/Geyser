@@ -328,7 +328,12 @@ public final class NetherNetServer implements EventRegistrar {
                             ? TokenTrust.MINECRAFT_AUTH : TokenTrust.ANY)
                     .setMotdProvider((host, remoteAddress, client) -> {
                         // host is the HTTP Host header the client sent, which may be absent
-                        BedrockPong pong = pingResponder.onQuery(GUID, remoteAddress, host);
+                        BedrockPong pong = pingResponder.onQuery(GUID, remoteAddress, host, true);
+                        if (pong == null) {
+                            // An extension cancelled the ping event. Signaling answers no status with a 404, so
+                            // NetherNet looks absent here just as the unanswered RakNet ping makes RakNet look offline
+                            return null;
+                        }
 
                         return new PongData.Builder()
                                 .setServerName(pong.motd())
