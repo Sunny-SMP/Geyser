@@ -120,10 +120,6 @@ public final class NetherNetServer implements EventRegistrar {
      * How long {@link #awaitShutdown()} waits, the window ProviderShutdown keeps the JVM alive for the same stop.
      */
     private static final long SHUTDOWN_WAIT_SECONDS = 20;
-    /**
-     * Whether "nethernet-debug" raised NetherNet's own logs, so a reload with it off lowers them again.
-     */
-    private static boolean debugLogging;
 
     private final GeyserImpl geyser;
     private final GeyserConfig.SignalingConfig config;
@@ -423,16 +419,14 @@ public final class NetherNetServer implements EventRegistrar {
             }
             logger().warning("Invalid -DgeyserNetherNetLogLevel \"" + property + "\", expected OFF, ERROR, WARN, INFO, DEBUG or TRACE");
         }
-        boolean debug = geyser.config().advanced().bedrock().nethernetDebug();
-        if (debug) {
+        if (geyser.config().advanced().bedrock().nethernetDebug()) {
             NetherNetLogging.setLogLevel("DEBUG");
         } else {
-            if (debugLogging) {
-                NetherNetLogging.setLogLevel("INFO");
-            }
+            // Set on every start. With "debug-mode" on, standalone raises the root logger to DEBUG, and
+            // NetherNet's loggers would inherit it
+            NetherNetLogging.setLogLevel("INFO");
             NetherNetLogging.setNativeLogLevel("WARN");
         }
-        debugLogging = debug;
     }
 
     /**
