@@ -33,6 +33,7 @@ import io.netty.util.concurrent.DefaultThreadFactory;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.cloudburstmc.netty.channel.nethernet.NetherNetChannelFactory;
 import org.cloudburstmc.netty.channel.nethernet.config.NetherChannelOption;
+import org.cloudburstmc.netty.channel.nethernet.signaling.JoinRefusal;
 import org.cloudburstmc.netty.channel.nethernet.signaling.NetherNetHTTPServerSignaling;
 import org.cloudburstmc.netty.channel.nethernet.signaling.PongData;
 import org.cloudburstmc.netty.signaling.ProviderClient;
@@ -54,6 +55,7 @@ import org.geysermc.geyser.GeyserImpl;
 import org.geysermc.geyser.GeyserLogger;
 import org.geysermc.geyser.api.event.EventRegistrar;
 import org.geysermc.geyser.api.event.bedrock.SessionJoinEvent;
+import org.geysermc.geyser.api.event.connection.NetherNetJoinRequestEvent;
 import org.geysermc.geyser.api.network.BedrockListener;
 import org.geysermc.geyser.configuration.GeyserConfig;
 import org.geysermc.geyser.configuration.GeyserPluginConfig;
@@ -326,6 +328,18 @@ public final class NetherNetServer implements EventRegistrar {
                     // setting already accepts the login chain it forwards
                     .setTokenTrust(geyser.config().advanced().bedrock().validateBedrockLogin()
                             ? TokenTrust.MINECRAFT_AUTH : TokenTrust.ANY)
+                    .setPlayerFilter((host, player) -> {
+                        NetherNetJoinRequestEvent event = new NetherNetJoinRequestEvent(
+                            Objects.requireNonNullElse(player.xuid(), ""), Objects.requireNonNullElse(player.displayName(), ""),
+                            player.remoteAddress(), host);
+                        geyser.eventBus().fire(event);
+                        if (!event.isCancelled()) {
+                            return null;
+                        }
+                        logger().debug("NetherNet join from " + event.gamertag() + " (" + event.xuid() + ") was refused using the API");
+                        // Service unavailable: this server is not taking players now, which a drain means
+                        return JoinRefusal.FULL;
+                    })
                     .setMotdProvider((host, remoteAddress, client) -> {
                         // host is the HTTP Host header the client sent, which may be absent
                         trace.statusQuery(remoteAddress, host);
