@@ -26,6 +26,7 @@
 package org.geysermc.geyser.network.bedrock.nethernet.codec;
 
 import io.netty.buffer.ByteBuf;
+import io.netty.buffer.ByteBufUtil;
 import io.netty.buffer.CompositeByteBuf;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
@@ -34,6 +35,7 @@ import org.cloudburstmc.protocol.bedrock.netty.BedrockBatchWrapper;
 import org.cloudburstmc.protocol.bedrock.netty.BedrockPacketWrapper;
 import org.cloudburstmc.protocol.bedrock.netty.codec.batch.BedrockBatchEncoder;
 import org.cloudburstmc.protocol.common.util.VarInts;
+import org.geysermc.geyser.GeyserImpl;
 
 import java.util.List;
 
@@ -46,11 +48,22 @@ public class NetherNetPacketEncoder extends MessageToMessageEncoder<BedrockPacke
     public static final String NAME = "nethernet-encoder";
     public static final NetherNetPacketEncoder INSTANCE = new NetherNetPacketEncoder();
 
+    /**
+     * Logs every packet sent over NetherNet with its first bytes, to see which one a client drops the connection on.
+     * Off by default, as it logs every resource pack chunk too.
+     */
+    private static final boolean LOG_PACKETS = Boolean.getBoolean("Geyser.LogNetherNetPackets");
+    private static final int LOGGED_BYTES = 512;
+    private static final int LOGGED_CHARS = 400;
+
     @Override
     protected void encode(ChannelHandlerContext ctx, BedrockPacketWrapper packet, List<Object> out) {
         ByteBuf message = packet.getPacketBuffer();
         if (message == null) {
             throw new IllegalArgumentException("BedrockPacket is not encoded");
+        }
+        if (LOG_PACKETS) {
+            logPacket(packet, message);
         }
 
         CompositeByteBuf buf = ctx.alloc().compositeDirectBuffer(2);
@@ -69,5 +82,16 @@ public class NetherNetPacketEncoder extends MessageToMessageEncoder<BedrockPacke
             buf.release();
             batch.release();
         }
+    }
+
+    private static void logPacket(BedrockPacketWrapper packet, ByteBuf message) {
+        String described = String.valueOf(packet.getPacket());
+        if (described.length() > LOGGED_CHARS) {
+            described = described.substring(0, LOGGED_CHARS) + "...";
+        }
+        int size = message.readableBytes();
+        int shown = Math.min(LOGGED_BYTES, size);
+        GeyserImpl.getInstance().getLogger().info("[NetherNet out] id=" + packet.getPacketId() + " size=" + size + " " + described
+            + " hex=" + ByteBufUtil.hexDump(message, message.readerIndex(), shown) + (shown < size ? "..." : ""));
     }
 }
