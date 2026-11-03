@@ -35,6 +35,7 @@ import org.geysermc.geyser.api.util.TriState;
 import org.geysermc.geyser.command.GeyserCommand;
 import org.geysermc.geyser.command.GeyserCommandSource;
 import org.geysermc.geyser.configuration.GeyserConfig;
+import org.geysermc.geyser.network.bedrock.nethernet.NetherNetAddressTrace;
 import org.geysermc.geyser.network.bedrock.nethernet.NetherNetServer;
 import org.incendo.cloud.CommandManager;
 import org.incendo.cloud.context.CommandContext;
@@ -44,6 +45,7 @@ import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -69,11 +71,15 @@ public class NetherNetCommand extends GeyserCommand {
         manager.command(baseBuilder(manager).literal("action").handler(this::action));
         manager.command(baseBuilder(manager).literal("diagnostics").handler(this::diagnostics));
         manager.command(baseBuilder(manager).literal("advertised").handler(this::advertised));
+        manager.command(baseBuilder(manager)
+            .literal("trace")
+            .optional(ARGUMENTS, greedyStringParser())
+            .handler(this::trace));
     }
 
     @Override
     public void execute(CommandContext<GeyserCommandSource> context) {
-        context.sender().sendMessage("Usage: " + rootCommand() + " " + name() + " <status | action | diagnostics | advertised>");
+        context.sender().sendMessage("Usage: " + rootCommand() + " " + name() + " <status | action | diagnostics | advertised | trace>");
     }
 
     /**
@@ -184,6 +190,44 @@ public class NetherNetCommand extends GeyserCommand {
         } else if (mode.nxs()) {
             source.sendMessage("External signaling is not running.");
         }
+    }
+
+    /**
+     * Turn logging every address NetherNet sees for a peer on or off, without a reload, so nobody is kicked
+     */
+    private void trace(CommandContext<GeyserCommandSource> context) {
+        GeyserCommandSource source = context.sender();
+        if (!source.isConsole()) {
+            source.sendMessage("This operation requires the server console.");
+            return;
+        }
+
+        String argument = context.<String>optional(ARGUMENTS).map(String::trim).orElse("").toLowerCase(Locale.ROOT);
+        switch (argument) {
+            case "on" -> NetherNetAddressTrace.setEnabled(true);
+            case "off" -> NetherNetAddressTrace.setEnabled(false);
+            case "pings on" -> NetherNetAddressTrace.setStatusQueriesEnabled(true);
+            case "pings off" -> NetherNetAddressTrace.setStatusQueriesEnabled(false);
+            case "" -> {
+            }
+            default -> {
+                source.sendMessage("Usage: " + rootCommand() + " " + name() + " trace [on | off | pings on | pings off]");
+                return;
+            }
+        }
+
+        String message = NetherNetAddressTrace.enabled()
+            ? "NetherNet address tracing is on: each new NetherNet connection logs the addresses it came from, and each "
+                + "login logs the player's name with that connection's id."
+            : "NetherNet address tracing is off.";
+        message += NetherNetAddressTrace.statusQueriesEnabled()
+            ? " Built-in signaling status queries are traced too."
+            : " Built-in signaling status queries are not traced.";
+        if ((NetherNetAddressTrace.enabled() || NetherNetAddressTrace.statusQueriesEnabled())
+                && !geyser.config().logPlayerIpAddresses()) {
+            message += " IP addresses are withheld, as \"log-player-ip-addresses\" is off.";
+        }
+        source.sendMessage(message);
     }
 
     static String builtinAdvertised(NetherNetServer.Advertised.Builtin builtin) {
