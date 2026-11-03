@@ -57,17 +57,21 @@ public class NetherNetChannelInitialiser extends GeyserServerInitializer {
     private static final String CONNECTION_GATE = "geyser-connection-gate";
 
     private final @Nullable GameOutcomeReporter outcomes;
+    private final NetherNetAddressTrace addressTrace;
 
-    public NetherNetChannelInitialiser(GeyserImpl geyser) {
-        this(geyser, null);
+    public NetherNetChannelInitialiser(GeyserImpl geyser, NetherNetAddressTrace addressTrace) {
+        this(geyser, null, addressTrace);
     }
 
     /**
      * @param outcomes Reports game outcomes to the provider, or null when no provider admits players here
+     * @param addressTrace Logs where each peer is while tracing is on
      */
-    public NetherNetChannelInitialiser(GeyserImpl geyser, @Nullable GameOutcomeReporter outcomes) {
+    public NetherNetChannelInitialiser(GeyserImpl geyser, @Nullable GameOutcomeReporter outcomes,
+                                       NetherNetAddressTrace addressTrace) {
         super(geyser, "Geyser NetherNet player thread");
         this.outcomes = outcomes;
+        this.addressTrace = addressTrace;
     }
 
     @Override
@@ -113,7 +117,12 @@ public class NetherNetChannelInitialiser extends GeyserServerInitializer {
             ctx.pipeline().remove(this);
             if (ctx.channel() instanceof NetherNetChannel netherNet) {
                 SourcedAddress peer = netherNet.reportedAddress();
-                logSignaled(netherNet.signaledAddress(), peer);
+                if (NetherNetAddressTrace.enabled()) {
+                    // Says everything logSignaled would
+                    addressTrace.connection(netherNet, outcomes == null ? "built-in signaling" : "external signaling (NXS)");
+                } else {
+                    logSignaled(netherNet.signaledAddress(), peer);
+                }
                 if (!ConnectionRequests.accept(geyser, peer.address(), peer.via(), peer.source().name())) {
                     ctx.close();
                     return;

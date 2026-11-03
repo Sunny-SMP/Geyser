@@ -43,6 +43,7 @@ import org.cloudburstmc.netty.signaling.ServerStatus;
 import org.cloudburstmc.netty.signaling.provider.NativeProviderHostFactory;
 import org.cloudburstmc.netty.signaling.provider.ProviderRuntimeConfiguration;
 import org.cloudburstmc.netty.signaling.provider.ProviderShutdown;
+import org.cloudburstmc.netty.util.nethernet.IpRangeSet;
 import org.cloudburstmc.netty.util.nethernet.NetherNetLogging;
 import org.cloudburstmc.netty.util.nethernet.OperatorIdentity;
 import org.cloudburstmc.netty.util.nethernet.SecretValue;
@@ -120,10 +121,6 @@ public final class NetherNetServer implements EventRegistrar {
      * How long {@link #awaitShutdown()} waits, the window ProviderShutdown keeps the JVM alive for the same stop.
      */
     private static final long SHUTDOWN_WAIT_SECONDS = 20;
-    /**
-     * Whether "nethernet-debug" raised NetherNet's own logs, so a reload with it off lowers them again.
-     */
-    private static boolean debugLogging;
 
     private final GeyserImpl geyser;
     private final GeyserConfig.SignalingConfig config;
@@ -317,17 +314,21 @@ public final class NetherNetServer implements EventRegistrar {
 
         // Start up NetherNet
         try {
+            IpRangeSet forwardedForProxies = TrustedProxies.parse(advanced.signalingTrustedProxies());
+            // The same HAProxy proxies RakNet takes, applied to the TCP listener
+            IpRangeSet proxyProtocolProxies = TrustedProxies.parse(advanced.haproxyProtocolWhitelistedIps());
+            NetherNetAddressTrace trace = new NetherNetAddressTrace(geyser, proxyProtocolProxies, forwardedForProxies);
             signalingBuilder
                     .setIdentity(identity)
-                    .setForwardedForProxies(TrustedProxies.parse(geyser.config().advanced().bedrock().signalingTrustedProxies()))
-                    // The same HAProxy proxies RakNet takes, applied to the TCP listener
-                    .setProxyProtocolProxies(TrustedProxies.parse(geyser.config().advanced().bedrock().haproxyProtocolWhitelistedIps()))
+                    .setForwardedForProxies(forwardedForProxies)
+                    .setProxyProtocolProxies(proxyProtocolProxies)
                     // Behind a proxy the peer is the proxy, signing its own assertion. The same
                     // setting already accepts the login chain it forwards
                     .setTokenTrust(geyser.config().advanced().bedrock().validateBedrockLogin()
                             ? TokenTrust.MINECRAFT_AUTH : TokenTrust.ANY)
                     .setMotdProvider((host, remoteAddress, client) -> {
                         // host is the HTTP Host header the client sent, which may be absent
+                        trace.statusQuery(remoteAddress, host);
                         BedrockPong pong = pingResponder.onQuery(GUID, remoteAddress, host, true);
                         if (pong == null) {
                             // An extension cancelled the ping event. Signaling answers no status with a 404, so
@@ -368,7 +369,7 @@ public final class NetherNetServer implements EventRegistrar {
 
             this.inbuiltEventLoopGroup = TransportHelper.TRANSPORT_TYPE.eventLoopGroupFactory()
                 .apply(0, new DefaultThreadFactory("NetherNet Built-in Signaling", true));
-            this.inbuiltInitialiser = new NetherNetChannelInitialiser(geyser);
+            this.inbuiltInitialiser = new NetherNetChannelInitialiser(geyser, trace);
 
             ServerBootstrap b = new ServerBootstrap();
             b.group(inbuiltEventLoopGroup)
@@ -423,16 +424,14 @@ public final class NetherNetServer implements EventRegistrar {
             }
             logger().warning("Invalid -DgeyserNetherNetLogLevel \"" + property + "\", expected OFF, ERROR, WARN, INFO, DEBUG or TRACE");
         }
-        boolean debug = geyser.config().advanced().bedrock().nethernetDebug();
-        if (debug) {
+        if (geyser.config().advanced().bedrock().nethernetDebug()) {
             NetherNetLogging.setLogLevel("DEBUG");
         } else {
-            if (debugLogging) {
-                NetherNetLogging.setLogLevel("INFO");
-            }
+            // Set on every start. With "debug-mode" on, standalone raises the root logger to DEBUG, and
+            // NetherNet's loggers would inherit it
+            NetherNetLogging.setLogLevel("INFO");
             NetherNetLogging.setNativeLogLevel("WARN");
         }
-        debugLogging = debug;
     }
 
     /**
@@ -510,7 +509,7 @@ public final class NetherNetServer implements EventRegistrar {
                 store = new ProviderStateStore(statePath);
                 eventLoopGroup = TransportHelper.TRANSPORT_TYPE.eventLoopGroupFactory()
                     .apply(0, new DefaultThreadFactory("NetherNet Provider", true));
-                providerInitialiser = new NetherNetChannelInitialiser(geyser, gameOutcomes);
+                providerInitialiser = new NetherNetChannelInitialiser(geyser, gameOutcomes, NetherNetAddressTrace.withoutProxies(geyser));
                 ServerBootstrap bootstrap = new ServerBootstrap().group(eventLoopGroup).childHandler(providerInitialiser);
                 NativeProviderHostFactory.Host host = NativeProviderHostFactory.open(bootstrap, runtime)
                         .toCompletableFuture().get(30, TimeUnit.SECONDS);
