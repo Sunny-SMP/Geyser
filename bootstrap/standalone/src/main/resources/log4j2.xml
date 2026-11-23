@@ -17,6 +17,8 @@
             <AppenderRef ref="TerminalConsole"/>
             <AppenderRef ref="File"/>
             <filters>
+                <!-- The remote Java server dropping our ping connection is expected and spams once per ping interval -->
+                <RegexFilter regex=".*IO error while trying to use legacy ping passthrough.*" onMatch="DENY" onMismatch="NEUTRAL" />
                 <MarkerFilter marker="packet_logging" onMatch="DENY" onMismatch="ACCEPT" />
             </filters>
         </Root>
